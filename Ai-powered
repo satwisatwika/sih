@@ -1,0 +1,35 @@
+import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Load job postings and training courses data
+job_postings_df = pd.read_csv('job_postings.csv')
+training_courses_df = pd.read_csv('training_courses.csv')
+
+# Create a TF-IDF vectorizer to convert job descriptions and training course descriptions into numerical vectors
+vectorizer = TfidfVectorizer(stop_words='english')
+
+# Fit the vectorizer to the job postings and training courses data
+vectorizer.fit(job_postings_df['job_description'] + training_courses_df['course_description'])
+
+# Define a function to calculate the similarity between a job seeker's profile and a job posting or training course
+def calculate_similarity(profile, job_posting_or_course):
+    profile_vector = vectorizer.transform([profile])
+    job_posting_or_course_vector = vectorizer.transform([job_posting_or_course])
+    similarity = cosine_similarity(profile_vector, job_posting_or_course_vector)
+    return similarity
+
+# Define a function to recommend job postings and training courses based on a job seeker's profile
+def recommend(profile):
+    recommended_job_postings = []
+    recommended_training_courses = []
+    for job_posting in job_postings_df['job_description']:
+        similarity = calculate_similarity(profile, job_posting)
+        if similarity > 0.5:
+            recommended_job_postings.append(job_posting)
+    for training_course in training_courses_df['course_description']:
+        similarity = calculate_similarity(profile, training_course)
+        if similarity > 0.5:
+            recommended_training_courses.append(training_course)
+    return recommended_job_postings, recommended_training_courses
